@@ -1,12 +1,12 @@
 import { serve } from '@hono/node-server'
-import { getRequestListener } from '@hono/node-server' // <--- استيراد جديد ومهم
+import { getRequestListener } from '@hono/node-server'
 import { Hono } from 'hono'
 import { JSDOM, VirtualConsole } from 'jsdom'
 import axios from 'axios'
 
 const app = new Hono()
 
-// معالجة الأخطاء العامة
+// معالجة الأخطاء
 app.onError((err, c) => {
     console.error('App Error:', err)
     return c.json({
@@ -15,7 +15,7 @@ app.onError((err, c) => {
     }, 500)
 })
 
-// كلاس السحب (بدون تغييرات جوهرية)
+// كلاس السحب
 class VideoLinkExtractor {
     config: { timeout: number; userAgent: string }
 
@@ -136,16 +136,14 @@ const handleExtraction = async (c: any) => {
 app.get('/', (c) => c.text('Hono Scraper is Ready! (Node Mode) 🚀'))
 app.get('/extract', handleExtraction)
 
-// --- الجزء المهم جداً للتصحيح ---
+
+// --- التعديل الجذري هنا ---
 
 const isVercel = process.env.VERCEL === '1';
 
-if (isVercel) {
-    // الطريقة الصحيحة لبيئة Node على Vercel
-    // نحول التطبيق إلى RequestListener (req, res) تقليدي
-    export default getRequestListener(app.fetch)
-} else {
-    // الطريقة المحلية على Termux
+if (!isVercel) {
+    // هذا الكود سيعمل فقط في Termux (Local)
+    // ولن يتم تنفيذه في Vercel، لكنه لا يؤثر على التصدير
     const port = 3000
     console.log(`Server is running on http://localhost:${port}`)
     serve({
@@ -153,3 +151,7 @@ if (isVercel) {
         port
     })
 }
+
+// التصدير يكون دائماً في السطر الأخير وخارج أي شرط
+// هذا ما سيستخدمه Vercel لتشغيل التطبيق
+export default getRequestListener(app.fetch)
